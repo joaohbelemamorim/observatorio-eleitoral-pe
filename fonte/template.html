@@ -1,0 +1,616 @@
+<title>Observatório Eleitoral PE</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: barra fixa de filtros (ano, cargo, abas) sobre uma coluna de trabalho de até 1180px; cada aba é um painel de leitura rápida, resumo antes do detalhe. */
+:root {
+  --bg: #f4f6f4;
+  --surface: #ffffff;
+  --sunken: #eaeeeb;
+  --ink: #142320;
+  --ink-2: #44534f;
+  --muted: #6c7a76;
+  --line: #dbe2de;
+  --accent: #0b6e64;
+  --accent-ink: #ffffff;
+  --accent-soft: #d6ebe7;
+  --s1: #2a78d6;      /* série 2026 / QP */
+  --s1-soft: #86b6ef; /* cadeiras por média */
+  --s2: #eb6834;      /* série 2022 */
+  --good: #0a7d0a;
+  --good-soft: #e1f2e1;
+  --warn: #9a6400;
+  --warn-soft: #fbefd2;
+  --crit: #b8322f;
+  --crit-soft: #f8e1e0;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1514; --surface: #172020; --sunken: #1d2826; --ink: #e6edea; --ink-2: #bccac5; --muted: #8d9b97;
+    --line: #2a3634; --accent: #46b8a8; --accent-ink: #0b1513; --accent-soft: #173a35;
+    --s1: #3987e5; --s1-soft: #184f95; --s2: #d95926;
+    --good: #4cc34c; --good-soft: #15301a; --warn: #f0b43c; --warn-soft: #3a2e12; --crit: #ef7c79; --crit-soft: #3d1c1b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1514; --surface: #172020; --sunken: #1d2826; --ink: #e6edea; --ink-2: #bccac5; --muted: #8d9b97;
+  --line: #2a3634; --accent: #46b8a8; --accent-ink: #0b1513; --accent-soft: #173a35;
+  --s1: #3987e5; --s1-soft: #184f95; --s2: #d95926;
+  --good: #4cc34c; --good-soft: #15301a; --warn: #f0b43c; --warn-soft: #3a2e12; --crit: #ef7c79; --crit-soft: #3d1c1b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+.brand { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-block: 14px 8px; }
+.brand h1 { font: 700 1.45rem/1.1 var(--f-display); margin: 0; letter-spacing: -0.01em; }
+.brand .sub { color: var(--muted); font-size: .85rem; }
+.seg button:disabled { opacity: .4; cursor: not-allowed; }
+.controls { display: flex; gap: 10px 18px; flex-wrap: wrap; align-items: center; padding-block: 4px 10px; }
+.seg { display: inline-flex; background: var(--sunken); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; color: var(--ink-2); font: 500 .85rem var(--f-body); padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.ctl-label { font: 500 .72rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-right: 6px; }
+nav.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+nav.tabs a { color: var(--ink-2); text-decoration: none; font: 500 .9rem var(--f-body); padding: 9px 12px 10px; border-bottom: 2px solid transparent; white-space: nowrap; }
+nav.tabs a[aria-current="page"] { color: var(--accent); border-color: var(--accent); }
+button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+main { padding-block: 22px 40px; display: grid; gap: 22px; }
+h2 { font: 700 1.25rem/1.2 var(--f-display); margin: 0; text-wrap: balance; }
+h3 { font: 600 .95rem/1.3 var(--f-body); margin: 0 0 10px; }
+.eyebrow { font: 500 .72rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 22px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.kpi { background: var(--surface); padding: 14px 16px; }
+.kpi .v { font: 700 1.5rem/1.15 var(--f-display); margin-top: 4px; }
+.kpi .d { color: var(--muted); font-size: .8rem; margin-top: 2px; }
+.head { display: flex; justify-content: space-between; align-items: end; gap: 12px; flex-wrap: wrap; }
+.note { color: var(--muted); font-size: .82rem; max-width: 72ch; }
+select, input[type="search"], input[type="number"] { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; max-width: 100%; }
+.picker { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.picker select, .picker input { min-width: 0; flex: 1 1 260px; }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th { text-align: left; font: 500 .72rem var(--f-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.click { cursor: pointer; }
+tr.click:hover td { background: var(--sunken); }
+.pill { display: inline-flex; align-items: center; gap: 5px; font: 500 .74rem var(--f-body); padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.ok { color: var(--good); background: var(--good-soft); }
+.pill.mid { color: var(--warn); background: var(--warn-soft); }
+.pill.no { color: var(--crit); background: var(--crit-soft); }
+.pill.neutral { color: var(--ink-2); background: var(--sunken); }
+.party { font: 500 .78rem var(--f-mono); color: var(--ink-2); }
+.up { color: var(--good); } .down { color: var(--crit); }
+/* barras horizontais: rótulo | barra | valor */
+.bars { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; gap: 6px 10px; align-items: center; font-size: .85rem; }
+.bars .lab { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bars .track { position: relative; height: 16px; display: flex; gap: 2px; }
+.bars .seg-b { height: 100%; border-radius: 0 4px 4px 0; min-width: 2px; }
+.bars .seg-b + .seg-b { border-radius: 0 4px 4px 0; }
+.bars .seg-b.first-of-two { border-radius: 0; }
+.bars .val { font-variant-numeric: tabular-nums; text-align: right; color: var(--ink-2); white-space: nowrap; }
+.pair .track { flex-direction: column; height: auto; gap: 2px; }
+.pair .track > div { height: 8px; border-radius: 0 3px 3px 0; min-width: 2px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .8rem; color: var(--ink-2); margin-bottom: 10px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.elected { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.elected div { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; background: var(--surface); }
+.elected div:hover { border-color: var(--accent); }
+.elected b { display: block; font-weight: 600; font-size: .9rem; }
+.elected span { color: var(--muted); font-size: .8rem; }
+.qe-strip { font: 500 .8rem var(--f-mono); color: var(--ink-2); background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 6px 12px; font: 500 .85rem var(--f-body); cursor: pointer; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.empty { color: var(--muted); padding: 20px 0; }
+footer { color: var(--muted); font-size: .78rem; padding-block: 10px 30px; border-top: 1px solid var(--line); }
+#tip { position: fixed; pointer-events: none; z-index: 20; background: var(--ink); color: var(--bg); font-size: .8rem; padding: 6px 9px; border-radius: 6px; max-width: 280px; line-height: 1.35; }
+.sim-in { width: 84px; }
+@media (max-width: 560px) {
+  .brand h1 { font-size: 1.2rem; }
+  .bars { grid-template-columns: minmax(80px, 38%) 1fr auto; }
+  .panel { padding: 14px; }
+}
+@media (prefers-reduced-motion: no-preference) { .bars .seg-b, .pair .track > div { transition: width .25s ease; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1>Observatório Eleitoral PE</h1>
+      <span class="sub">Deputados, Senado, governo e Presidência · Pernambuco · 2022 e 2026</span>
+    </div>
+    <div class="controls">
+      <div><span class="ctl-label">Eleição</span><span class="seg" id="seg-ano"><button data-v="2026">2026</button><button data-v="2022">2022</button></span></div>
+      <div><span class="ctl-label">Cargo</span><span class="seg" id="seg-cargo"><button data-v="DF">Dep. federal</button><button data-v="DE">Dep. estadual</button><button data-v="SEN">Senador</button><button data-v="GOV">Governador</button><button data-v="PR">Presidente</button></span></div>
+      <div id="ctl-turno"><span class="ctl-label">Turno</span><span class="seg" id="seg-turno"><button data-v="1">1º</button><button data-v="2">2º</button></span></div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <a href="#geral" data-tab="geral">Visão geral</a>
+      <a href="#partidos" data-tab="partidos">Partidos e federações</a>
+      <a href="#candidatos" data-tab="candidatos">Candidatos</a>
+      <a href="#municipios" data-tab="municipios">Municípios</a>
+      <a href="#simulador" data-tab="simulador">Simulador de cadeiras</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="view"></main>
+
+<footer class="wrap">
+  Fonte: Tribunal Superior Eleitoral, Portal de Dados Abertos (licença CC BY). 2026: votação por município e totais oficiais da totalização.
+  2022: soma dos boletins de urna por seção, com situação dos candidatos e votos anulados conforme a votação nominal oficial por município e zona.
+  Nos dois anos, o cálculo de cadeiras do painel reproduz os eleitos oficiais.
+  Governador e senador (2022 e 2026) e presidente (1º turno de 2026): somados a partir da votação por seção; nomes de urna de 2026 conferidos com a imprensa. Presidente 2022: votação nominal e detalhe da apuração por município e zona (arquivos BR do TSE), filtrados para Pernambuco.
+  Cadeiras calculadas pelos arts. 106 a 109 do Código Eleitoral (Lei 14.211/2021), com federação contada como um partido.
+</footer>
+<div id="tip" hidden></div>
+
+<script>
+/*__SEATS__*/
+</script>
+<script>
+const D = /*__DATA__*/null;
+const VAGAS = { DF: 25, DE: 49 };
+const CARGO_NOME = { DF: 'Deputado federal', DE: 'Deputado estadual', SEN: 'Senador', GOV: 'Governador', PR: 'Presidente' };
+const MAJ = new Set(['SEN', 'GOV', 'PR']);
+const isMaj = () => MAJ.has(state.cargo);
+const dataKey = () => isMaj() && state.turno === '2' ? state.cargo + '2' : state.cargo;
+const temDados = (ano, key) => !!D.anos[ano][key];
+const MUN = D.municipios; // [nome, regiao, meso, ibge]
+const REGIOES = ['Região Metropolitana', 'Mata Norte', 'Mata Sul', 'Agreste', 'Sertão', 'Sertão do São Francisco'];
+const nf = new Intl.NumberFormat('pt-BR');
+const pf = (x, d = 1) => (x * 100).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d }) + '%';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+
+const state = { ano: '2026', cargo: 'DF', turno: '1', tab: 'geral', unit: null, cand: null, mun: null, sim: {} };
+try { const s = JSON.parse(localStorage.getItem('obs-pe') || '{}'); if (s.ano) state.ano = s.ano; if (s.cargo) state.cargo = s.cargo; } catch (e) {}
+const save = () => { try { localStorage.setItem('obs-pe', JSON.stringify({ ano: state.ano, cargo: state.cargo })); } catch (e) {} };
+
+// ---------- cálculo por eleição/cargo ----------
+const CACHE = {};
+function calc(ano, cargo) {
+  const k = ano + cargo; if (CACHE[k]) return CACHE[k];
+  const b = D.anos[ano][cargo], n = MUN.length;
+  const unitOf = p => (b.partidos[p] && b.partidos[p].fed) || p;
+  const munNom = new Array(n).fill(0), munLeg = new Array(n).fill(0);
+  const partyMun = {}, partyNom = {}, partyLeg = {};
+  for (const p of Object.keys(b.partidos)) { partyMun[p] = new Array(n).fill(0); partyNom[p] = 0; partyLeg[p] = 0; }
+  const cands = b.candidatos.map((c, i) => {
+    const v = b.votos[i]; let tot = 0;
+    for (let j = 0; j < v.length; j += 2) tot += v[j + 1];
+    const o = { i, num: c[0], nome: c[1], partido: c[2], sit: c[3], eleitoOficial: c[4] === 's', anul: !!c[5], votos: tot, unit: unitOf(c[2]) };
+    partyMun[c[2]] ??= new Array(n).fill(0); partyNom[c[2]] ??= 0; partyLeg[c[2]] ??= 0;
+    if (!o.anul) for (let j = 0; j < v.length; j += 2) { munNom[v[j]] += v[j + 1]; partyMun[c[2]][v[j]] += v[j + 1]; partyNom[c[2]] += v[j + 1]; }
+    return o;
+  });
+  for (const [p, info] of Object.entries(b.partidos)) {
+    if (info.anulado) continue;
+    for (let j = 0; j < info.leg.length; j += 2) { munLeg[info.leg[j]] += info.leg[j + 1]; partyMun[p][info.leg[j]] += info.leg[j + 1]; partyLeg[p] += info.leg[j + 1]; }
+  }
+  const munValid = munNom.map((x, m) => x + munLeg[m]);
+  const validos = munValid.reduce((a, x) => a + x, 0);
+  const partidos = Object.keys(partyMun).filter(p => partyNom[p] + partyLeg[p] > 0 || cands.some(c => c.partido === p));
+  const units = {};
+  for (const p of partidos) {
+    const u = units[unitOf(p)] ??= { id: unitOf(p), partidos: [], votos: 0, nom: 0, leg: 0, mun: new Array(n).fill(0), cands: [] };
+    u.partidos.push(p); u.nom += partyNom[p]; u.leg += partyLeg[p]; u.votos += partyNom[p] + partyLeg[p];
+    partyMun[p].forEach((x, m) => u.mun[m] += x);
+  }
+  for (const c of cands) if (!c.anul) units[c.unit].cands.push({ id: c.i, votos: c.votos });
+  const res = MAJ.has(cargo.replace(/2$/, '')) ? { qe: null, unidades: [], eleitos: cands.filter(c => c.eleitoOficial).map(c => ({ id: c.i, via: '' })) }
+    : distribuirCadeiras(Object.values(units).filter(u => u.votos > 0), validos, VAGAS[cargo]);
+  const via = {}; res.eleitos.forEach(e => via[e.id] = e.via);
+  cands.forEach(c => { c.eleito = c.i in via; c.via = via[c.i] || ''; });
+  const seats = {}; res.unidades.forEach(u => seats[u.id] = u);
+  // posição geral
+  [...cands].sort((a, b) => b.votos - a.votos).forEach((c, r) => c.rank = r + 1);
+  const t = b.totais;
+  const comp = t.comparecimento.reduce((a, x) => a + x, 0);
+  const eleit = t.eleitorado[0] == null ? null : t.eleitorado.reduce((a, x) => a + x, 0);
+  return CACHE[k] = { ano, cargo, b, cands, units, partidos, partyMun, partyNom, partyLeg, munValid, validos, res, seats, comp, eleit,
+    brancos: t.brancos.reduce((a, x) => a + x, 0), nulos: t.nulos.reduce((a, x) => a + x, 0), unitOf };
+}
+const C = () => calc(state.ano, dataKey());
+const outroAno = () => state.ano === '2026' ? '2022' : '2026';
+
+// ---------- componentes ----------
+function kpi(label, v, d = '') { return `<div class="kpi"><div class="eyebrow">${label}</div><div class="v">${v}</div>${d ? `<div class="d">${d}</div>` : ''}</div>`; }
+function statusQE(pct) {
+  if (pct >= 1) return '<span class="pill ok">Atingiu o QE</span>';
+  if (pct >= 0.8) return '<span class="pill mid">80% do QE</span>';
+  return '<span class="pill no">Abaixo de 80%</span>';
+}
+function delta(a, b) {
+  if (b == null || b === 0) return '<span class="party">novo</span>';
+  const d = (a - b) / b; const cls = d >= 0 ? 'up' : 'down';
+  return `<span class="${cls}">${d >= 0 ? '+' : ''}${pf(d)}</span>`;
+}
+function dseats(a, b) { const d = a - b; return d === 0 ? '<span class="party">=</span>' : `<span class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '+' : ''}${d}</span>`; }
+// barras simples, uma escala por gráfico
+function bars(rows, { fmt = nf.format, color = 'var(--s1)' } = {}) {
+  const max = Math.max(...rows.map(r => r.v), 1);
+  return `<div class="bars">${rows.map(r => `<div class="lab" title="${esc(r.label)}">${r.labelHtml || esc(r.label)}</div>
+    <div class="track" data-tip="${esc(r.tip || r.label + ': ' + fmt(r.v))}"><div class="seg-b" style="width:${(r.v / max * 100).toFixed(2)}%;background:${r.color || color}"></div></div>
+    <div class="val">${r.valHtml || fmt(r.v)}</div>`).join('')}</div>`;
+}
+function pairBars(rows) { // rows: {label, a (2026), b (2022)}
+  const max = Math.max(...rows.flatMap(r => [r.a, r.b]), 1);
+  return `<div class="legend"><span><i style="background:var(--s1)"></i>2026</span><span><i style="background:var(--s2)"></i>2022</span></div>
+  <div class="bars pair">${rows.map(r => `<div class="lab" title="${esc(r.label)}">${esc(r.label)}</div>
+    <div class="track" data-tip="${esc(r.label)} · 2026: ${nf.format(r.a)} · 2022: ${nf.format(r.b)}">
+      <div style="width:${(r.a / max * 100).toFixed(2)}%;background:var(--s1)"></div>
+      <div style="width:${(r.b / max * 100).toFixed(2)}%;background:var(--s2)"></div></div>
+    <div class="val">${delta(r.a, r.b)}</div>`).join('')}</div>`;
+}
+function porRegiao(munArr, c) {
+  const tot = {}; REGIOES.forEach(r => tot[r] = { v: 0, val: 0 });
+  munArr.forEach((x, m) => { const r = MUN[m][1]; tot[r].v += x; tot[r].val += c.munValid[m]; });
+  return REGIOES.map(r => ({ label: r, v: tot[r].v, share: tot[r].val ? tot[r].v / tot[r].val : 0 }));
+}
+function candMun(c, cand) { const v = c.b.votos[cand.i], arr = new Array(MUN.length).fill(0); for (let j = 0; j < v.length; j += 2) arr[v[j]] = v[j + 1]; return arr; }
+
+// ---------- abas ----------
+function viewGeral() {
+  if (isMaj()) return viewGeralMaj();
+  const c = C(), o = calc(outroAno(), state.cargo);
+  const brNu = c.brancos + c.nulos;
+  const units = c.res.unidades.slice().sort((a, b) => b.votos - a.votos);
+  const comSeats = units.filter(u => u.cadeiras > 0 || u.pctQE >= 0.5);
+  const maxS = Math.max(...comSeats.map(u => u.cadeiras), 1);
+  const est = '';
+  const chart = `<div class="legend"><span><i style="background:var(--s1)"></i>Quociente partidário</span><span><i style="background:var(--s1-soft)"></i>Sobras (média)</span></div>
+  <div class="bars">${comSeats.map(u => `<div class="lab"><a href="#partidos" data-unit="${esc(u.id)}" style="color:inherit">${esc(u.id)}</a></div>
+    <div class="track" data-tip="${esc(u.id)}: ${u.porQP} por QP, ${u.porMedia} por média · ${nf.format(u.votos)} votos (${pf(u.pctQE, 0)} do QE)">
+      ${u.porQP ? `<div class="seg-b${u.porMedia ? ' first-of-two' : ''}" style="width:${u.porQP / maxS * 100}%;background:var(--s1)"></div>` : ''}
+      ${u.porMedia ? `<div class="seg-b" style="width:${u.porMedia / maxS * 100}%;background:var(--s1-soft)"></div>` : ''}
+    </div><div class="val">${u.cadeiras} ${u.cadeiras === 1 ? 'cadeira' : 'cadeiras'}</div>`).join('')}</div>`;
+  const rows = units.map(u => {
+    const ou = o.seats[u.id];
+    return `<tr class="click" data-unit="${esc(u.id)}"><td><b>${esc(u.id)}</b></td><td class="n">${nf.format(u.votos)}</td><td class="n">${pf(u.votos / c.validos, 2)}</td>
+    <td class="n">${pf(u.pctQE, 0)}</td><td>${statusQE(u.pctQE)}</td><td class="n">${u.porQP}</td><td class="n">${u.porMedia}</td><td class="n"><b>${u.cadeiras}</b></td>
+    <td class="n">${ou ? dseats(u.cadeiras, ou.cadeiras) : '<span class="party">—</span>'}</td></tr>`;
+  }).join('');
+  const eleitos = c.cands.filter(x => x.eleito).sort((a, b) => b.votos - a.votos);
+  return `
+  <section class="head"><div><div class="eyebrow">${CARGO_NOME[state.cargo]} · ${state.ano}</div><h2>Resultado em Pernambuco</h2></div>
+    <div class="qe-strip">Quociente eleitoral: ${nf.format(c.res.qe)} votos · ${VAGAS[state.cargo]} vagas</div></section>
+  <section class="kpis">
+    ${kpi('Votos válidos', nf.format(c.validos), `${pf(c.validos / c.comp)} do comparecimento`)}
+    ${kpi('Comparecimento', nf.format(c.comp), c.eleit ? `${pf(c.comp / c.eleit)} do eleitorado` : 'eleitorado não incluído em 2022')}
+    ${kpi('Brancos e nulos', nf.format(brNu), pf(brNu / c.comp) + ' do comparecimento')}
+    ${kpi('Votos de legenda', nf.format(Object.values(c.partyLeg).reduce((a, x) => a + x, 0)), pf(Object.values(c.partyLeg).reduce((a, x) => a + x, 0) / c.validos) + ' dos válidos')}
+    ${kpi('Partidos com cadeira', units.filter(u => u.cadeiras).length, `de ${units.length} que disputaram`)}
+  </section>
+  <section class="grid2">
+    <div class="panel"><h3>Cadeiras por partido ou federação${est}</h3>${chart}
+      <p class="note">Mostra quem elegeu alguém ou chegou a 50% do quociente eleitoral. Clique no nome para ver o detalhe.</p></div>
+    <div class="panel"><h3>Eleitos${est}</h3><div class="elected">${eleitos.map(x => `<div data-cand="${x.i}"><b>${esc(x.nome)}</b><span>${esc(x.partido)} · ${nf.format(x.votos)} · ${x.via === 'QP' ? 'quociente partidário' : 'média'}</span></div>`).join('')}</div></div>
+  </section>
+  <section class="panel"><div class="head"><h3>Desempenho de todos os partidos e federações</h3><span class="note">Variação de cadeiras em relação a ${outroAno()}</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Partido / federação</th><th class="n">Votos</th><th class="n">% válidos</th><th class="n">% do QE</th><th>Cláusula</th><th class="n">QP</th><th class="n">Média</th><th class="n">Cadeiras</th><th class="n">vs ${outroAno()}</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="note">Para disputar as sobras, o partido ou federação precisa de 80% do quociente eleitoral e de um candidato com 20% dele. Cadeiras por quociente partidário exigem candidato com 10% do quociente eleitoral.</p></section>`;
+}
+
+function vencedores(c) {
+  const k = c.ano + c.cargo; if (VENC[k]) return VENC[k];
+  const best = new Array(MUN.length).fill(-1), bv = new Array(MUN.length).fill(0);
+  c.cands.forEach(x => { if (x.anul) return; const a = c.b.votos[x.i]; for (let j = 0; j < a.length; j += 2) if (a[j + 1] > bv[a[j]]) { bv[a[j]] = a[j + 1]; best[a[j]] = x.i; } });
+  return VENC[k] = best;
+}
+const VENC = {};
+function viewGeralMaj() {
+  const c = C(), brNu = c.brancos + c.nulos;
+  const cands = c.cands.filter(x => !x.anul).sort((a, b) => b.votos - a.votos);
+  const anul = c.cands.filter(x => x.anul);
+  const venc = vencedores(c);
+  const cont = {}; venc.forEach(i => cont[i] = (cont[i] || 0) + 1);
+  const turno = state.turno === '2' ? '2º turno' : '1º turno';
+  const doisVotos = state.cargo === 'SEN' && state.ano === '2026';
+  const titulo = { PR: 'Presidente em Pernambuco · ' + turno, GOV: 'Governo de Pernambuco · ' + turno, SEN: 'Senado por Pernambuco · ' + (doisVotos ? 'duas vagas' : 'uma vaga') }[state.cargo];
+  const nota = ({ PR: (state.turno === '2' ? 'Resultado do 2º turno em Pernambuco.' : 'Os dois mais votados no país foram ao 2º turno.') + ' O comparecimento inclui eleitores em trânsito, que votam só para presidente.',
+    GOV: state.ano === '2026' ? 'Eleição decidida no 1º turno, com maioria absoluta dos votos válidos.' : state.turno === '1' ? 'Nenhum candidato teve maioria absoluta; os dois mais votados foram ao 2º turno.' : 'Resultado do 2º turno.',
+    SEN: doisVotos ? 'Cada eleitor votou em dois candidatos. Os percentuais seguem o padrão do TSE e são calculados sobre o total de votos válidos para o cargo, que soma os dois votos.' : 'Uma vaga em disputa; cada eleitor votou em um candidato.' })[state.cargo];
+  const destaque = x => x.eleitoOficial || x.sit === '2º turno';
+  const labelDest = cands.some(x => x.sit === '2º turno') ? 'Foi ao 2º turno' : 'Eleito';
+  const regTab = cands.slice(0, 8).map(x => {
+    const r = porRegiao(candMun(c, x), c);
+    return `<tr class="click" data-cand="${x.i}"><td><b>${esc(x.nome)}</b> <span class="party">${esc(x.partido)}</span></td>${r.map(z => `<td class="n">${pf(z.share)}</td>`).join('')}</tr>`;
+  }).join('');
+  return `
+  <section class="head"><div><div class="eyebrow">${CARGO_NOME[state.cargo]} · ${state.ano}</div><h2>${titulo}</h2></div></section>
+  <section class="kpis">
+    ${kpi('Votos válidos', nf.format(c.validos), doisVotos ? 'soma dos dois votos' : `${pf(c.validos / c.comp)} do comparecimento`)}
+    ${kpi('Comparecimento', nf.format(c.comp), c.eleit ? `${pf(c.comp / c.eleit)} do eleitorado` : 'eleitorado não incluído em 2022')}
+    ${c.eleit ? kpi('Abstenção', nf.format(Math.max(c.eleit - c.comp, 0)), pf(Math.max(c.eleit - c.comp, 0) / c.eleit) + ' do eleitorado') : ''}
+    ${kpi('Brancos e nulos', nf.format(brNu), doisVotos ? 'contando os dois votos' : pf(brNu / c.comp) + ' do comparecimento')}
+    ${kpi('Mais votado', esc(cands[0].nome), `${pf(cands[0].votos / c.validos)} dos válidos`)}
+  </section>
+  <section class="grid2">
+    <div class="panel"><h3>Votação</h3>${bars(cands.map(x => ({ label: x.nome, labelHtml: `<a href="#candidatos" data-cand="${x.i}" style="color:inherit">${esc(x.nome)}</a> <span class="party">${esc(x.partido)}</span>`, v: x.votos,
+      color: destaque(x) ? 'var(--s1)' : 'var(--s1-soft)',
+      valHtml: `${nf.format(x.votos)} <span class="party">${pf(x.votos / c.validos, 2)}</span>`, tip: `${x.nome}: ${nf.format(x.votos)} votos, ${pf(x.votos / c.validos, 2)} dos válidos · ${x.sit}` })))}
+      <div class="legend" style="margin-top:12px"><span><i style="background:var(--s1)"></i>${labelDest}</span><span><i style="background:var(--s1-soft)"></i>Demais</span></div>
+      <p class="note">${nota}${anul.length ? ` Votos em ${anul.map(a => esc(a.nome)).join(', ')} (${nf.format(anul.reduce((s, a) => s + a.votos, 0))}) não entram nos válidos.` : ''}</p></div>
+    <div class="panel"><h3>Municípios em que ficou em 1º lugar</h3>${bars(cands.filter(x => cont[x.i]).map(x => ({ label: x.nome, v: cont[x.i], valHtml: `${cont[x.i]} <span class="party">de ${MUN.length}</span>`, tip: `${x.nome}: primeiro lugar em ${cont[x.i]} municípios` })))}</div>
+  </section>
+  <section class="panel"><h3>Fatia dos votos válidos por região</h3>
+    <div class="tbl-wrap"><table><thead><tr><th>Candidato</th>${REGIOES.map(r => `<th class="n">${r}</th>`).join('')}</tr></thead><tbody>${regTab}</tbody></table></div>
+    <p class="note">Os oito mais votados. Clique em um nome para ver a votação por município.</p></section>`;
+}
+
+function viewPartidos() {
+  const c = C(), o = calc(outroAno(), state.cargo);
+  const list = c.res.unidades.slice().sort((a, b) => b.votos - a.votos);
+  if (!state.unit || !c.units[state.unit]) state.unit = list[0].id;
+  const u = c.units[state.unit], s = c.seats[u.id];
+  const opts = list.map(x => `<option value="${esc(x.id)}" ${x.id === u.id ? 'selected' : ''}>${esc(x.id)} — ${nf.format(x.votos)} votos</option>`).join('');
+  // comparação com o outro ano pelos partidos que formam a unidade hoje
+  const cur = state.ano === '2026' ? c : o, old = state.ano === '2026' ? o : c;
+  const memb = u.partidos.slice().sort((a, b) => (c.partyNom[b] + c.partyLeg[b]) - (c.partyNom[a] + c.partyLeg[a]));
+  const comp = memb.map(p => ({ label: p, a: (cur.partyNom[p] || 0) + (cur.partyLeg[p] || 0), b: (old.partyNom[p] || 0) + (old.partyLeg[p] || 0) }));
+  const reg = porRegiao(u.mun, c);
+  const top = u.mun.map((v, m) => ({ m, v })).filter(x => x.v > 0).sort((a, b) => b.v - a.v).slice(0, 20);
+  const cands = c.cands.filter(x => x.unit === u.id).sort((a, b) => b.votos - a.votos);
+  const qe = c.res.qe;
+  return `
+  <section class="head"><div><div class="eyebrow">${CARGO_NOME[state.cargo]} · ${state.ano}</div><h2>Partidos e federações</h2></div></section>
+  <div class="picker"><label class="ctl-label" for="sel-unit">Escolha</label><select id="sel-unit">${opts}</select></div>
+  <section class="kpis">
+    ${kpi('Votos', nf.format(u.votos), `${pf(u.votos / c.validos, 2)} dos válidos`)}
+    ${kpi('Nominais / legenda', `${nf.format(u.nom)}`, `${nf.format(u.leg)} de legenda (${pf(u.leg / (u.votos || 1))})`)}
+    ${kpi('Quociente eleitoral', pf(s ? s.pctQE : 0, 0), s ? statusQE(s.pctQE) : '')}
+    ${kpi('Cadeiras', s ? s.cadeiras : 0, s ? `${s.porQP} por QP · ${s.porMedia} por média` : '')}
+    ${kpi('Candidatos', cands.length, u.partidos.length > 1 ? 'Federação: ' + u.partidos.join(', ') : '')}
+  </section>
+  <section class="grid2">
+    <div class="panel"><h3>Votos por região</h3>${bars(reg.map(r => ({ label: r.label, v: r.v, valHtml: `${nf.format(r.v)} <span class="party">${pf(r.share)}</span>`, tip: `${r.label}: ${nf.format(r.v)} votos, ${pf(r.share)} dos válidos da região` })))}
+      <p class="note">O percentual ao lado é a fatia dos votos válidos de cada região.</p></div>
+    <div class="panel"><h3>Comparação 2026 x 2022 por partido</h3>${pairBars(comp)}
+      <p class="note">Soma de votos nominais e de legenda de cada partido, independentemente da federação de que fazia parte em cada ano.</p></div>
+  </section>
+  <section class="grid2">
+    <div class="panel"><h3>Municípios com mais votos</h3>${bars(top.map(x => ({ label: MUN[x.m][0], v: x.v, valHtml: `${nf.format(x.v)} <span class="party">${pf(x.v / c.munValid[x.m])}</span>`, tip: `${MUN[x.m][0]}: ${nf.format(x.v)} votos, ${pf(x.v / c.munValid[x.m])} dos válidos do município` })))}</div>
+    <div class="panel"><h3>Candidatos</h3><div class="tbl-wrap" style="max-height:640px;overflow-y:auto"><table><thead><tr><th>#</th><th>Candidato</th><th>Partido</th><th class="n">Votos</th><th class="n">% QE</th><th>Situação</th></tr></thead><tbody>
+      ${cands.map((x, r) => `<tr class="click" data-cand="${x.i}"><td class="n">${r + 1}</td><td>${esc(x.nome)}</td><td class="party">${esc(x.partido)}</td><td class="n">${nf.format(x.votos)}</td><td class="n">${pf(x.votos / qe, 0)}</td><td>${situ(x)}</td></tr>`).join('')}
+    </tbody></table></div></div>
+  </section>`;
+}
+function situ(x) {
+  if (x.anul) return '<span class="pill no">Votos anulados</span>';
+  if (x.eleito) return `<span class="pill ok">Eleito · ${x.via === 'QP' ? 'QP' : 'média'}</span>`;
+  return '<span class="pill neutral">Não eleito</span>';
+}
+
+function viewCandidatos() {
+  const c = C();
+  const sorted = c.cands.slice().sort((a, b) => b.votos - a.votos);
+  if (state.cand == null || !c.cands[state.cand]) state.cand = sorted[0].i;
+  const x = c.cands[state.cand];
+  const arr = candMun(c, x);
+  const reg = porRegiao(arr, c);
+  const top = arr.map((v, m) => ({ m, v })).filter(y => y.v > 0).sort((a, b) => b.v - a.v);
+  const nMun = top.length;
+  const top10share = top.slice(0, 10).reduce((a, y) => a + y.v, 0) / (x.votos || 1);
+  let comp = '';
+  if (isMaj()) {
+    const best = top.map(y => ({ m: y.m, v: y.v, s: y.v / c.munValid[y.m] })).sort((a, b) => b.s - a.s).slice(0, 15);
+    const venceu = vencedores(c).filter(w => w === x.i).length;
+    comp = `<div class="panel"><h3>Onde teve a maior fatia dos votos válidos</h3>${bars(best.map(y => ({ label: MUN[y.m][0], v: y.s, fmt: null, valHtml: `${pf(y.s)} <span class="party">${nf.format(y.v)}</span>`, tip: `${MUN[y.m][0]}: ${pf(y.s)} dos válidos (${nf.format(y.v)} votos)` })), { fmt: v => pf(v) })}
+      <p class="note">Ficou em primeiro lugar em ${venceu} ${venceu === 1 ? 'município' : 'municípios'}.</p></div>`;
+    for (const k of ['GOV', 'SEN', 'PR', 'DF', 'DE']) {
+      const oa = outroAno(); if (!temDados(oa, k)) continue;
+      const oc = calc(oa, k), y = oc.cands.find(z => norm(z.nome) === norm(x.nome));
+      if (!y) continue;
+      const a = porRegiao(arr, c), b = porRegiao(candMun(oc, y), oc);
+      const [r26, r22] = state.ano === '2026' ? [a, b] : [b, a];
+      comp += `<div class="panel"><h3>Comparação com ${oa}: ${CARGO_NOME[k].toLowerCase()}${k === 'GOV' && oa === '2022' ? ' (1º turno)' : ''}</h3>
+        ${pairBars(REGIOES.map((r, i) => ({ label: r, a: r26[i].v, b: r22[i].v })))}
+        <p class="note">Em ${oa}, ${esc(y.nome)} (${esc(y.partido)}) teve ${nf.format(y.votos)} votos, ${pf(y.votos / oc.validos)} dos válidos${y.sit ? ' · ' + esc(y.sit) : ''}.</p></div>`;
+      break;
+    }
+  } else {
+  // mesmo nome no outro ano
+  const o = calc(outroAno(), state.cargo);
+  const outro = o.cands.find(y => norm(y.nome) === norm(x.nome));
+  const outroOutroCargo = calc(outroAno(), state.cargo === 'DF' ? 'DE' : 'DF').cands.find(y => norm(y.nome) === norm(x.nome));
+  if (outro) {
+    const oarr = candMun(o, outro), oreg = porRegiao(oarr, o);
+    const a = state.ano === '2026' ? reg : oreg, b = state.ano === '2026' ? oreg : reg;
+    comp = `<div class="panel"><h3>Comparação com ${outroAno()} (${esc(outro.nome)}, ${esc(outro.partido)})</h3>
+      ${pairBars(REGIOES.map((r, k) => ({ label: r, a: a[k].v, b: b[k].v })))}
+      <p class="note">Em ${outroAno()}: ${nf.format(outro.votos)} votos, ${outro.rank}º mais votado${outro.eleito ? ', eleito' : ''}. Comparação feita pelo nome de urna.</p></div>`;
+  } else if (outroOutroCargo) {
+    comp = `<div class="panel"><h3>Em ${outroAno()}</h3><p class="note">Disputou ${CARGO_NOME[state.cargo === 'DF' ? 'DE' : 'DF'].toLowerCase()} pelo ${esc(outroOutroCargo.partido)}, com ${nf.format(outroOutroCargo.votos)} votos. Troque o cargo no topo para ver o detalhe.</p></div>`;
+  } else comp = `<div class="panel"><h3>Em ${outroAno()}</h3><p class="note">Nenhum candidato com o mesmo nome de urna disputou deputado federal ou estadual em ${outroAno()}.</p></div>`;
+  }
+  const opts = sorted.map(y => `<option value="${y.i}" ${y.i === x.i ? 'selected' : ''}>${esc(y.nome)} (${esc(y.partido)}) — ${nf.format(y.votos)}</option>`).join('');
+  return `
+  <section class="head"><div><div class="eyebrow">${CARGO_NOME[state.cargo]} · ${state.ano}</div><h2>Candidatos</h2></div></section>
+  <div class="picker"><label class="ctl-label" for="busca">Buscar</label><input type="search" id="busca" placeholder="Nome de urna ou número" autocomplete="off">
+    <select id="sel-cand" aria-label="Candidato">${opts}</select></div>
+  <section class="kpis">
+    ${kpi('Votos', nf.format(x.votos), `${pf(x.votos / c.validos, 2)} dos válidos do estado`)}
+    ${kpi('Posição', x.rank + 'º', `entre ${c.cands.length} candidatos`)}
+    ${kpi('Partido', esc(x.partido), isMaj() ? '' : x.unit !== x.partido ? 'Federação ' + esc(x.unit) : 'sem federação')}
+    ${isMaj() ? kpi('Situação', x.anul ? 'Anulado' : esc(x.sit), x.anul ? 'votos não contados' : (state.cargo === 'PR' || state.cargo === 'GOV') ? (state.turno === '2' ? '2º turno' : '1º turno') : '') :
+      kpi('Situação', x.anul ? 'Anulado' : x.eleito ? 'Eleito' : 'Não eleito', x.anul ? 'votos não contados' : x.eleito ? (x.via === 'QP' ? 'por quociente partidário' : 'por média') : (state.ano === '2026' ? esc(x.sit) : ''))}
+    ${kpi('Alcance', nMun + ' municípios', `${pf(top10share, 0)} dos votos vêm dos 10 maiores`)}
+  </section>
+  <section class="grid2">
+    <div class="panel"><h3>Votos por região</h3>${bars(reg.map(r => ({ label: r.label, v: r.v, valHtml: `${nf.format(r.v)} <span class="party">${pf(r.v / (x.votos || 1), 0)}</span>`, tip: `${r.label}: ${nf.format(r.v)} votos (${pf(r.v / (x.votos || 1))} do total do candidato)` })))}
+      <p class="note">O percentual ao lado é a parte da votação total do candidato.</p></div>
+    ${comp}
+  </section>
+  <section class="panel"><div class="head"><h3>Votação por município</h3><span class="note">${nMun} municípios com voto</span></div>
+    <div class="tbl-wrap" style="max-height:620px;overflow-y:auto"><table><thead><tr><th>Município</th><th>Região</th><th class="n">Votos</th><th class="n">% do candidato</th><th class="n">Acumulado</th><th class="n">% dos válidos</th><th class="n">Posição no município</th></tr></thead><tbody>
+    ${(() => { let acc = 0; return top.map(y => { acc += y.v; return `<tr class="click" data-mun="${y.m}"><td>${esc(MUN[y.m][0])}</td><td class="party">${esc(MUN[y.m][1])}</td><td class="n">${nf.format(y.v)}</td><td class="n">${pf(y.v / x.votos)}</td><td class="n">${pf(acc / x.votos, 0)}</td><td class="n">${pf(y.v / c.munValid[y.m])}</td><td class="n">${posMun(c, y.m, y.v)}º</td></tr>`; }).join(''); })()}
+    </tbody></table></div></section>`;
+}
+const MUNRANK = {};
+function posMun(c, m, v) {
+  const k = c.ano + c.cargo + m;
+  if (!MUNRANK[k]) { const vals = []; c.cands.forEach(x => { if (x.anul) return; const a = c.b.votos[x.i]; for (let j = 0; j < a.length; j += 2) if (a[j] === m) vals.push(a[j + 1]); }); MUNRANK[k] = vals.sort((a, b) => b - a); }
+  return MUNRANK[k].findIndex(z => z <= v) + 1;
+}
+
+function viewMunicipios() {
+  if (state.mun == null) state.mun = MUN.findIndex(m => m[0] === 'RECIFE');
+  const c = C(), o = isMaj() ? c : calc(outroAno(), state.cargo);
+  const m = state.mun;
+  const t = c.b.totais;
+  const opts = MUN.map((x, k) => `<option value="${k}" ${k === m ? 'selected' : ''}>${esc(x[0])}</option>`).join('');
+  const cands = [];
+  c.cands.forEach(x => { if (x.anul) return; const a = c.b.votos[x.i]; for (let j = 0; j < a.length; j += 2) if (a[j] === m) cands.push({ x, v: a[j + 1] }); });
+  cands.sort((a, b) => b.v - a.v);
+  const cur = state.ano === '2026' ? c : o, old = state.ano === '2026' ? o : c;
+  const ps = c.partidos.map(p => ({ label: p, a: cur.partyMun[p] ? cur.partyMun[p][m] : 0, b: old.partyMun[p] ? old.partyMun[p][m] : 0 }))
+    .concat(o.partidos.filter(p => !c.partidos.includes(p)).map(p => ({ label: p, a: cur.partyMun[p] ? cur.partyMun[p][m] : 0, b: old.partyMun[p] ? old.partyMun[p][m] : 0 })))
+    .filter(r => r.a + r.b > 0).sort((a, b) => (b.a + b.b) - (a.a + a.b)).slice(0, 14);
+  const units = Object.values(c.units).map(u => ({ label: u.id, v: u.mun[m] })).filter(r => r.v > 0).sort((a, b) => b.v - a.v);
+  const comp = t.comparecimento[m], el = t.eleitorado[m];
+  return `
+  <section class="head"><div><div class="eyebrow">${CARGO_NOME[state.cargo]} · ${state.ano}</div><h2>Municípios</h2></div></section>
+  <div class="picker"><label class="ctl-label" for="sel-mun">Município</label><select id="sel-mun">${opts}</select></div>
+  <section class="kpis">
+    ${kpi('Região', esc(MUN[m][1]), esc(MUN[m][2]))}
+    ${kpi('Comparecimento', nf.format(comp), el ? `${pf(comp / el)} de ${nf.format(el)} eleitores` : '')}
+    ${kpi('Votos válidos', nf.format(c.munValid[m]), pf(c.munValid[m] / comp) + ' do comparecimento')}
+    ${kpi('Brancos e nulos', nf.format(t.brancos[m] + t.nulos[m]), pf((t.brancos[m] + t.nulos[m]) / comp))}
+    ${kpi('Mais votado', cands[0] ? esc(cands[0].x.nome) : '—', cands[0] ? `${esc(cands[0].x.partido)} · ${nf.format(cands[0].v)} votos` : '')}
+  </section>
+  ${isMaj() ? `<section class="panel"><h3>Votação no município</h3>${bars(cands.map(y => ({ label: y.x.nome, v: y.v, valHtml: `${nf.format(y.v)} <span class="party">${pf(y.v / c.munValid[m])}</span>` })))}
+    ${state.cargo === 'SEN' ? '<p class="note">Cada eleitor votou em dois candidatos ao Senado; os percentuais são sobre o total de votos válidos para o cargo.</p>' : ''}</section>` : `<section class="grid2">
+    <div class="panel"><h3>Partidos e federações no município</h3>${bars(units.map(r => ({ label: r.label, v: r.v, valHtml: `${nf.format(r.v)} <span class="party">${pf(r.v / c.munValid[m])}</span>` })))}</div>
+    <div class="panel"><h3>Partidos: 2026 x 2022</h3>${pairBars(ps)}<p class="note">Os 14 partidos com mais votos somando os dois anos.</p></div>
+  </section>`}
+  <section class="panel"><h3>Candidatos mais votados no município</h3>
+    <div class="tbl-wrap" style="max-height:620px;overflow-y:auto"><table><thead><tr><th>#</th><th>Candidato</th><th>Partido</th><th class="n">Votos</th><th class="n">% dos válidos</th><th class="n">% da votação do candidato</th><th>Situação</th></tr></thead><tbody>
+    ${cands.slice(0, 60).map((y, r) => `<tr class="click" data-cand="${y.x.i}"><td class="n">${r + 1}</td><td>${esc(y.x.nome)}</td><td class="party">${esc(y.x.partido)}</td><td class="n">${nf.format(y.v)}</td><td class="n">${pf(y.v / c.munValid[m])}</td><td class="n">${pf(y.v / y.x.votos)}</td><td>${situ(y.x)}</td></tr>`).join('')}
+    </tbody></table></div><p class="note">Até 60 candidatos. A última coluna mostra quanto o município pesa na votação total de cada um.</p></section>`;
+}
+
+// ---------- simulador ----------
+function simKey() { return state.ano + state.cargo; }
+function simState() {
+  const k = simKey(), c = C();
+  if (!state.sim[k]) { state.sim[k] = { grupo: {}, ajuste: {} }; c.partidos.forEach(p => { state.sim[k].grupo[p] = c.unitOf(p); state.sim[k].ajuste[p] = 0; }); }
+  return state.sim[k];
+}
+function simular() {
+  const c = C(), s = simState();
+  const units = {}; let validos = 0;
+  for (const p of c.partidos) {
+    const f = 1 + (Number(s.ajuste[p]) || 0) / 100;
+    const g = s.grupo[p] || p;
+    const u = units[g] ??= { id: g, votos: 0, cands: [] };
+    const pv = Math.round(((c.partyNom[p] || 0) + (c.partyLeg[p] || 0)) * f);
+    u.votos += pv; validos += pv;
+    c.cands.filter(x => x.partido === p && !x.anul).forEach(x => u.cands.push({ id: x.i, votos: Math.round(x.votos * f) }));
+  }
+  return distribuirCadeiras(Object.values(units).filter(u => u.votos > 0), validos, VAGAS[state.cargo]);
+}
+function viewSimulador() {
+  const c = C(), s = simState();
+  const r = simular();
+  const grupos = [...new Set([...Object.values(s.grupo), ...c.partidos.map(c.unitOf)])].sort();
+  const novas = ['Nova federação A', 'Nova federação B', 'Nova federação C'];
+  const parts = c.partidos.slice().sort((a, b) => (c.partyNom[b] + c.partyLeg[b]) - (c.partyNom[a] + c.partyLeg[a]));
+  const rows = parts.map(p => {
+    const optsSet = [...new Set([p, ...grupos.filter(g => g.split(' / ').includes(p) || !c.partidos.includes(g)), ...novas, s.grupo[p]])];
+    return `<tr><td><b>${esc(p)}</b></td><td class="n">${nf.format(c.partyNom[p] + c.partyLeg[p])}</td>
+      <td><select data-grupo="${esc(p)}" id="g-${esc(p)}" aria-label="Grupo de ${esc(p)}">${optsSet.map(g => `<option value="${esc(g)}" ${g === s.grupo[p] ? 'selected' : ''}>${g === p ? 'Sozinho' : esc(g)}</option>`).join('')}</select></td>
+      <td class="n"><input type="number" class="sim-in" step="5" min="-100" max="300" value="${s.ajuste[p]}" data-ajuste="${esc(p)}" id="a-${esc(p)}" aria-label="Variação de votos de ${esc(p)} em %"> %</td></tr>`;
+  }).join('');
+  const real = c.res;
+  const ids = [...new Set([...real.unidades.map(u => u.id), ...r.unidades.map(u => u.id)])];
+  const cmp = ids.map(id => ({ id, a: (real.unidades.find(u => u.id === id) || {}).cadeiras || 0, b: (r.unidades.find(u => u.id === id) || {}).cadeiras || 0,
+    pct: (r.unidades.find(u => u.id === id) || {}).pctQE })).filter(x => x.a || x.b).sort((x, y) => y.b - x.b || y.a - x.a);
+  const realSet = new Set(real.eleitos.map(e => e.id)), simSet = new Set(r.eleitos.map(e => e.id));
+  const entram = [...simSet].filter(i => !realSet.has(i)).map(i => c.cands[i]), saem = [...realSet].filter(i => !simSet.has(i)).map(i => c.cands[i]);
+  const lista = (arr, cls) => arr.length ? arr.sort((a, b) => b.votos - a.votos).map(x => `<span class="pill ${cls}">${esc(x.nome)} · ${esc(x.partido)} · ${nf.format(x.votos)}</span>`).join('') : '<span class="note">Ninguém.</span>';
+  return `
+  <section class="head"><div><div class="eyebrow">${CARGO_NOME[state.cargo]} · ${state.ano}</div><h2>Simulador de cadeiras</h2></div>
+    <button class="btn" id="sim-reset">Voltar ao resultado real</button></section>
+  <p class="note">Junte partidos em federações diferentes das reais ou aumente e reduza a votação de cada partido. A variação percentual vale para os votos nominais de todos os candidatos do partido e para a legenda. O cálculo segue as mesmas regras usadas no resultado.</p>
+  <section class="grid2">
+    <div class="panel"><h3>Cenário</h3><div class="tbl-wrap"><table><thead><tr><th>Partido</th><th class="n">Votos reais</th><th>Concorre em</th><th class="n">Variação</th></tr></thead><tbody>${rows}</tbody></table></div></div>
+    <div style="display:grid;gap:22px;align-content:start;min-width:0">
+      <div class="panel"><h3>Cadeiras: real x simulado</h3><div class="qe-strip" style="margin-bottom:12px">Quociente eleitoral simulado: ${nf.format(r.qe)} votos</div>
+        <div class="tbl-wrap"><table><thead><tr><th>Partido / federação</th><th class="n">Real</th><th class="n">Simulado</th><th class="n">Diferença</th><th class="n">% QE</th></tr></thead><tbody>
+        ${cmp.map(x => `<tr><td>${esc(x.id)}</td><td class="n">${x.a}</td><td class="n"><b>${x.b}</b></td><td class="n">${dseats(x.b, x.a)}</td><td class="n">${x.pct != null ? pf(x.pct, 0) : '—'}</td></tr>`).join('')}</tbody></table></div></div>
+      <div class="panel"><h3>Quem entra</h3><div class="chips">${lista(entram, 'ok')}</div><h3 style="margin-top:16px">Quem sai</h3><div class="chips">${lista(saem, 'no')}</div></div>
+    </div>
+  </section>`;
+}
+
+// ---------- render e eventos ----------
+const VIEWS = { geral: viewGeral, partidos: viewPartidos, candidatos: viewCandidatos, municipios: viewMunicipios, simulador: viewSimulador };
+function render() {
+  if (!temDados(state.ano, state.cargo)) state.ano = state.ano === '2026' ? '2022' : '2026';
+  if (state.turno === '2' && !temDados(state.ano, state.cargo + '2')) state.turno = '1';
+  if (isMaj() && (state.tab === 'partidos' || state.tab === 'simulador')) state.tab = 'geral';
+  document.querySelectorAll('#seg-ano button').forEach(b => { const ok = temDados(b.dataset.v, state.cargo); b.disabled = !ok; b.title = ok ? '' : 'Sem dados deste cargo em ' + b.dataset.v; });
+  document.getElementById('ctl-turno').hidden = !(state.cargo === 'GOV' || state.cargo === 'PR');
+  const t2 = document.querySelector('#seg-turno [data-v="2"]'); t2.disabled = !temDados(state.ano, state.cargo + '2');
+  t2.title = t2.disabled ? (state.cargo === 'PR' && state.ano === '2026' ? 'O 2º turno ainda não aconteceu' : 'Não houve 2º turno') : '';
+  document.querySelectorAll('#seg-turno button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === state.turno));
+  document.querySelectorAll('#tabs a').forEach(a => a.hidden = isMaj() && (a.dataset.tab === 'partidos' || a.dataset.tab === 'simulador'));
+  document.querySelectorAll('#seg-ano button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === state.ano));
+  document.querySelectorAll('#seg-cargo button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === state.cargo));
+  document.querySelectorAll('#tabs a').forEach(a => a.toggleAttribute('aria-current', a.dataset.tab === state.tab) || a.dataset.tab === state.tab && a.setAttribute('aria-current', 'page'));
+  document.querySelectorAll('#tabs a').forEach(a => { if (a.dataset.tab === state.tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  document.getElementById('view').innerHTML = VIEWS[state.tab]();
+}
+function go(tab) { state.tab = tab; try { history.replaceState(null, '', '#' + tab); } catch (e) {} render(); window.scrollTo({ top: 0 }); }
+document.getElementById('seg-ano').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.disabled) return; state.ano = b.dataset.v; state.cand = null; save(); render(); });
+document.getElementById('seg-turno').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; state.turno = b.dataset.v; state.cand = null; render(); });
+document.getElementById('seg-cargo').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state.cargo = b.dataset.v; state.cand = null; state.unit = null; save(); render(); });
+document.getElementById('tabs').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); go(a.dataset.tab); });
+const view = document.getElementById('view');
+view.addEventListener('click', e => {
+  const u = e.target.closest('[data-unit]'); if (u) { e.preventDefault(); state.unit = u.dataset.unit; go('partidos'); return; }
+  const c = e.target.closest('[data-cand]'); if (c) { state.cand = +c.dataset.cand; go('candidatos'); return; }
+  const m = e.target.closest('[data-mun]'); if (m) { state.mun = +m.dataset.mun; go('municipios'); return; }
+  if (e.target.id === 'sim-reset') { delete state.sim[simKey()]; render(); }
+});
+view.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'sel-unit') { state.unit = t.value; render(); }
+  else if (t.id === 'sel-cand') { state.cand = +t.value; render(); }
+  else if (t.id === 'sel-mun') { state.mun = +t.value; render(); }
+  else if (t.dataset.grupo) { simState().grupo[t.dataset.grupo] = t.value; render(); }
+  else if (t.dataset.ajuste) { simState().ajuste[t.dataset.ajuste] = Math.max(-100, Math.min(300, Number(t.value) || 0)); render(); }
+});
+view.addEventListener('input', e => {
+  if (e.target.id !== 'busca') return;
+  const q = norm(e.target.value.trim()); const sel = document.getElementById('sel-cand');
+  for (const o of sel.options) o.hidden = q && !norm(o.textContent).includes(q) && !C().cands[o.value].num.startsWith(q);
+  const first = [...sel.options].find(o => !o.hidden);
+  if (first && q) { sel.value = first.value; }
+});
+view.addEventListener('keydown', e => { if (e.target.id === 'busca' && e.key === 'Enter') { const sel = document.getElementById('sel-cand'); state.cand = +sel.value; render(); const b = document.getElementById('busca'); if (b) b.focus(); } });
+// tooltip
+const tip = document.getElementById('tip');
+document.addEventListener('mousemove', e => {
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (!t) { tip.hidden = true; return; }
+  tip.textContent = t.dataset.tip; tip.hidden = false;
+  const x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8), y = e.clientY + 16;
+  tip.style.left = x + 'px'; tip.style.top = (y + tip.offsetHeight > window.innerHeight ? e.clientY - tip.offsetHeight - 10 : y) + 'px';
+});
+const h = location.hash.replace('#', ''); if (VIEWS[h]) state.tab = h;
+render();
+</script>
